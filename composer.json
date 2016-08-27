@@ -1,0 +1,8 @@
+{
+    "autoload":{
+        "files":[
+            "controllers/BaseController.php",
+            "models/BaseModel.php"
+        ]
+    }
+}
