@@ -5,40 +5,68 @@ class AccountModel extends BaseModel {
     private $salt = "VEFRJGVdfsgf";
 
     public function isAuthed()
-    {
-        $db = $this->connection();
-        if(!isset($_SESSION['user_id'])) {
-            return false;
-        }
-
-        $userId = $_SESSION['user_id'];
-
-        $stmt = $db->prepare("SELECT * FROM `users` WHERE `id` = :id");
-        $stmt->execute(['id' => $userId]);
-
-        if ($stmt->rowCount() == 1) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function findByLoginPassword($login, $password)
-    {
-        $password = $this->encryptPassword($password);
-
-        $db = $this->connection();
-        $stmt = $db->prepare("SELECT * FROM `users` WHERE `name` = :login AND `pass` = :password");
-        $stmt->execute(['login' => $login, 'password' => $password]);
-
-        if ($stmt->rowCount() == 1) {
-            return $stmt->fetch();
-        }
-
-        return false;
-    }
-
-    public function encryptPassword($pass) {
-        return md5($pass . $this->salt);
-    }
+	{
+		if(!isset($_SESSION['user_id'])) {
+			return false;
+		}
+		
+		$userId = $_SESSION['user_id'];
+		
+		$user = $this->getUserById($userId);
+		if($user === false) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public function getUserById($id)
+	{
+		$db = $this->connection();
+		$user = $db->prepare("SELECT * FROM `users` WHERE `id` = :id");
+		$user->execute(['id' => $id]);
+		
+		if($user->rowCount() == 1) {
+			return $user->fetch();
+		}
+		
+		return false;
+	}
+	
+	public function getUserByLoginPassword($logn,$password)
+	{
+		$db = $this->connection();
+		$user = $db->prepare("SELECT * FROM `users` WHERE `name` = :login AND `pass` = :password");
+		$user->execute(['login' => $logn, 'password' => $this->hashPassword($password)]);
+		
+		if($user->rowCount() == 1) {
+			return $user->fetch();
+		}
+		
+		return false;
+	}
+	
+	public function getUserByLogin($logn)
+	{
+		
+		$db = $this->connection();
+		$user = $db->prepare("SELECT * FROM `users` WHERE `name` = :login");
+		$user->execute(['login' => $logn]);
+		
+		return $user->rowCount();
+	}
+	
+	private function hashPassword($pass) 
+	{
+		return md5($pass . $this->salt);
+	}
+	
+	public function registerUser($logn,$password)
+	{
+		$db = $this->connection();
+		$user = $db->prepare("INSERT INTO `users` (`name`,`pass`) VALUES (:login, :password)");
+		$user->execute(['login' => $logn, 'password' => $this->hashPassword($password)]);
+		
+		return $db->lastInsertId();
+	}
 }

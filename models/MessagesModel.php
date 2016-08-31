@@ -16,12 +16,12 @@ class MessagesModel extends BaseModel{
 		return $result -> fetchAll();
 	}
 	
-	public function addPost($text)
+	public function addPost($text, $user_id)
 	{
 		$db = $this->connection();
-		$query = "INSERT INTO `messages` SET `message` = :message, `datetime`=NOW()";
+		$query = "INSERT INTO `messages` SET `message` = :message, `user_id` = :user_id, `datetime`=NOW()";
 		$stmt = $db->prepare($query);
-		$stmt->execute(['message' => $text]);
+		$stmt->execute(['message' => $text, 'user_id' => $user_id]);
 		return $db->lastInsertId();
 	}
 
@@ -34,12 +34,24 @@ class MessagesModel extends BaseModel{
 		return $stmt->fetch();
 	}
 
-	public function editPost($id, $text)
+	public function editPost($id, $text, $user_id)
 	{
 		$db = $this->connection();
-		$query = "UPDATE `messages` SET `message` = :message, `datetime`=NOW() WHERE `id` = :id";
+
+		$queryId = "SELECT `user_id` FROM `messages` WHERE `id` = :id";
+		$stmtUserId = $db->prepare($queryId);
+		$stmtUserId->execute(['id' => $id]);
+		$useIdByMessageId = $stmtUserId->fetch();
+
+		if ($useIdByMessageId['user_id'] != $user_id) {
+			return false;
+		}
+
+		$query = "UPDATE `messages` SET `message` = :message, `user_id` = :user_id, `datetime`=NOW() WHERE `id` = :id";
 		$stmt = $db->prepare($query);
-		$stmt->execute(['message' => $text, 'id' => $id]);
+		$stmt->execute(['message' => $text, 'id' => $id, 'user_id' => $user_id]);
+
+		return true;
 	}
 
 	public function deletePost($id)

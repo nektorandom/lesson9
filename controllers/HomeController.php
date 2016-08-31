@@ -8,6 +8,15 @@ class HomeController extends BaseController {
 		$model = new MessagesModel();
 		
 		$data['messages'] = $model->getAllMessages();
+
+		$this->LoadModel('Account');
+		$userInfo = new AccountModel();
+
+		if(isset($_SESSION['user_id'])) {
+			$user = $userInfo->getUserById($_SESSION['user_id']);
+			$data['user_name'] = $user['name'];
+		}
+
 		$this->LoadPage('home',$data);
 	}
 }

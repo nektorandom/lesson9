@@ -18,7 +18,7 @@ class MessagesController extends BaseController {
 			$this->LoadModel('Messages');
 			$model = new MessagesModel();
 			
-			$model->addPost($_POST['message']);
+			$model->addPost($_POST['message'], $_POST['user_id']);
 			
 			$this->redirectToAction("index","home");
 		}
@@ -41,9 +41,15 @@ class MessagesController extends BaseController {
             $this->LoadModel('Messages');
 			$model = new MessagesModel();
 
-            $model->editPost($_POST['id'], $_POST['message']);
+            $result = $model->editPost($_POST['id'], $_POST['message'], $_POST['user_id']);
 
-            $this->redirectToAction("index", "home");
+            if ($result) {
+                $this->redirectToAction("index", "home");
+            } else {
+                $data['post'] = $model->getPost($_POST['id']);
+                $data['error'] = 'You cant edit messages of others people';
+                $this->LoadPage('edit',$data);
+            }
         }
     }
 
